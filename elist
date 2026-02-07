@@ -1,0 +1,86 @@
+#!/usr/bin/bash
+
+nf_str="INPUT NOT FOUND."
+nf_file="FILE NOT FOUND."
+nf_opt="OPTIONS NOT FOUND."
+save="FILE SAVED AS new-"
+echo "1. REPLACE STRING FROM LIST FILE."
+echo "2. ADD STRING TO LIST FILE."
+read -p ">>> " input
+case $input in
+	1) read -p "PATH: " path
+		if [[ ! -s $path ]]; then
+			echo $nf_file
+			else
+				file=$(< $path)
+				fname=$(basename $path)
+				echo "1. REPLACE FROM INPUT USER."
+				echo "2. REPLACE FROM OTHER LIST FILE."
+				read -p ">>> " option
+				case $option in
+					1) read -p "OLD STRING: " old
+						if [[ -z $old ]]; then
+							echo $nf_str
+							else
+								if [[ $old == "*" ]]; then
+									old="\\*"
+								fi
+								read -p "NEW STRING: " new
+								if [[ -z $new ]]; then
+									echo $nf_str
+									else
+										if [[ $new == "&" ]]; then
+											new="\\&"
+										fi
+										echo "$file" | sed "s/${old}/${new}/" > new-${fname}
+										echo $save$fname
+								fi
+						fi;;
+					2) read -p "OLD STRING: " old
+						if [[ -z $old ]]; then
+							echo $nf_str
+							else
+								if [[ $old == "*" ]]; then
+									old="\\*"
+								fi
+								read -p "NEW PATH: " new
+								if [[ ! -s $new ]]; then
+									echo $nf_file
+									else
+										while IFS= read -r line; do
+											echo "${file//${old}/${line}}" >> new-${fname}
+										done < $new
+										echo $save$fname
+										filter=$(< new-${fname})
+										echo "$filter" | sort -u > new-${fname}
+								fi
+						fi;;
+
+
+					*) echo $nf_opt;;
+				esac
+		fi;;
+	2) read -p "PATH: " path
+		if [[ ! -s $path ]]; then
+			echo $nf_file
+		else
+			file=$(< $path)
+			fname=$(basename $path)
+			read -p "STRING: " str
+			if [[ -z $str ]]; then
+				echo $nf_str
+			else
+				echo "1. ADD TO FRONT."
+				echo "2. ADD TO END."
+				read -p ">>> " opt
+				case $opt in
+					1) echo "$file" | sed "s/^/${str}/" > new-${fname}
+						echo $save$fname;;
+					2) echo "$file" | sed "s/$/${str}/" > new-${fname}
+						echo $save$fname;;
+					*) echo $nf_opt;;
+				esac
+			fi
+		fi;;
+	*) echo $nf_opt;;
+esac
